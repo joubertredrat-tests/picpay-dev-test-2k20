@@ -4,10 +4,8 @@ services:
   picpay-test-postgres:
     image: postgres:11-alpine
     container_name: picpay-test-postgres
-    environment:
-      POSTGRES_DB: "dev"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "password"
+    env_file:
+      - ./scripts/docker/postgres-11/.env
     ports:
       - 35432:5432
     healthcheck:
@@ -16,7 +14,7 @@ services:
       timeout: 10s
       retries: 3
   picpay-test-redis:
-    image: redis
+    image: redis:6.0.5
     container_name: picpay-test-redis
     command: redis-server
     ports:
@@ -37,6 +35,10 @@ services:
     build:
       context: .
       dockerfile: ./scripts/docker/php-fpm/Dockerfile
+      args:
+        - env_database_url="pgsql://postgres:password@picpay-test-postgres:5432/picpay_dev_test?serverVersion=11.0"
+    env_file:
+      - ./scripts/docker/php-fpm/.env
     depends_on:
       - picpay-test-postgres
       - picpay-test-redis
@@ -50,6 +52,8 @@ services:
     build:
       context: .
       dockerfile: scripts/docker/app-init/Dockerfile
+    env_file:
+      - ./scripts/docker/php-fpm/.env
     depends_on:
       - picpay-test-symfony-php-fpm
     links:
